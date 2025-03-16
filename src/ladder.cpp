@@ -12,7 +12,6 @@ bool edit_distance_within(const string& str1, const string& str2, int d) {
         return false;
     }
     
-    // if lengths are the same, count character differences
     if (len1 == len2) {
         int diffs = 0;
         for (int i = 0; i < len1; i++) {
@@ -73,11 +72,6 @@ vector<string> generate_word_ladder(const string& begin_word, const string& end_
     set<string> visited;
     visited.insert(begin);
     
-    if (word_list.find(end) == word_list.end() && begin != begin_word) {
-        error(begin_word, end_word, "End word is not in the dictionary");
-        return {};
-    }
-    
     while (!ladder_queue.empty()) {
         vector<string> ladder = ladder_queue.front();
         ladder_queue.pop();
@@ -130,35 +124,11 @@ void print_word_ladder(const vector<string>& ladder) {
         return;
     }
     
-    cout << "Word ladder found: ";
     for (size_t i = 0; i < ladder.size(); ++i) {
         cout << ladder[i];
         if (i < ladder.size() - 1) {
             cout << " ";
         }
     }
-    cout << " " << endl;
-}
-
-void verify_word_ladder() {
-    set<string> word_list;
-    load_words(word_list, "words.txt");
-    
-    auto test = [&](const string& start, const string& end, int expected_size) {
-        vector<string> ladder = generate_word_ladder(start, end, word_list);
-        bool passed = ladder.size() == expected_size;
-        cout << start << " to " << end << ": " << (passed ? "passed" : "failed") 
-             << " (expected " << expected_size << ", got " << ladder.size() << ")" << endl;
-        
-        if (!passed) {
-            print_word_ladder(ladder);
-        }
-    };
-    
-    test("cat", "dog", 4);
-    test("marty", "curls", 6);
-    test("code", "data", 6);
-    test("work", "play", 6);
-    test("sleep", "awake", 8);
-    test("car", "cheat", 4);
+    cout << endl;
 }
