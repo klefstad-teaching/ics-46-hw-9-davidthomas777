@@ -12,12 +12,13 @@ bool edit_distance_within(const string& str1, const string& str2, int d) {
         return false;
     }
     
+    // if lengths are the same, count character differences
     if (len1 == len2) {
-        int diff = 0;
-        for (int i = 0; i < len1; ++i) {
+        int diffs = 0;
+        for (int i = 0; i < len1; i++) {
             if (str1[i] != str2[i]) {
-                diff++;
-                if (diff > d) {
+                diffs++;
+                if (diffs > d) {
                     return false;
                 }
             }
@@ -25,24 +26,30 @@ bool edit_distance_within(const string& str1, const string& str2, int d) {
         return true;
     }
     
-    if (len1 > len2) {
-        return edit_distance_within(str2, str1, d);
-    }
-    
-    for (int i = 0, j = 0; i <= len1; ++i, ++j) {
-        if (i < len1 && str1[i] == str2[j]) {
-            continue;
+    if (abs(len1 - len2) == 1) {
+        const string& shorter = (len1 < len2) ? str1 : str2;
+        const string& longer = (len1 < len2) ? str2 : str1;
+        
+        int i = 0, j = 0;
+        bool skip_done = false;
+        
+        while (i < shorter.length() && j < longer.length()) {
+            if (shorter[i] != longer[j]) {
+                if (skip_done) {
+                    return false;
+                }
+                skip_done = true;
+                j++;
+            } else {
+                i++;
+                j++;
+            }
         }
         
-        --i;
-        
-        if (d <= 0) {
-            return false;
-        }
-        d--;
+        return true;
     }
     
-    return true;
+    return false;
 }
 
 bool is_adjacent(const string& word1, const string& word2) {
@@ -66,7 +73,7 @@ vector<string> generate_word_ladder(const string& begin_word, const string& end_
     set<string> visited;
     visited.insert(begin);
     
-    if (word_list.find(end) == word_list.end()) {
+    if (word_list.find(end) == word_list.end() && begin != begin_word) {
         error(begin_word, end_word, "End word is not in the dictionary");
         return {};
     }
@@ -119,25 +126,23 @@ void load_words(set<string>& word_list, const string& file_name) {
 
 void print_word_ladder(const vector<string>& ladder) {
     if (ladder.empty()) {
-        cout << "No ladder found." << endl;
+        cout << "No word ladder found." << endl;
         return;
     }
     
-    cout << "Found ladder of length " << ladder.size() << ":" << endl;
+    cout << "Word ladder found: ";
     for (size_t i = 0; i < ladder.size(); ++i) {
         cout << ladder[i];
         if (i < ladder.size() - 1) {
-            cout << " → ";
+            cout << " ";
         }
     }
-    cout << endl;
+    cout << " " << endl;
 }
 
 void verify_word_ladder() {
     set<string> word_list;
     load_words(word_list, "words.txt");
-    
-    cout << "Testing generate_word_ladder:" << endl;
     
     auto test = [&](const string& start, const string& end, int expected_size) {
         vector<string> ladder = generate_word_ladder(start, end, word_list);
