@@ -25,30 +25,27 @@ bool edit_distance_within(const string& str1, const string& str2, int d) {
         return true;
     }
     
-    if (abs(len1 - len2) == 1) {
-        const string& shorter = (len1 < len2) ? str1 : str2;
-        const string& longer = (len1 < len2) ? str2 : str1;
-        
-        int i = 0, j = 0;
-        bool skip_done = false;
-        
-        while (i < shorter.length() && j < longer.length()) {
-            if (shorter[i] != longer[j]) {
-                if (skip_done) {
-                    return false;
-                }
-                skip_done = true;
-                j++;
-            } else {
-                i++;
-                j++;
-            }
-        }
-        
-        return true;
+    if (len1 > len2) {
+        return edit_distance_within(str2, str1, d);
     }
     
-    return false;
+    int i = 0, j = 0;
+    bool skip_done = false;
+    
+    while (i < len1 && j < len2) {
+        if (str1[i] != str2[j]) {
+            if (skip_done) {
+                return false;
+            }
+            skip_done = true;
+            j++;
+        } else {
+            i++;
+            j++;
+        }
+    }
+    
+    return (j == len2) || (j == len2 - 1);
 }
 
 bool is_adjacent(const string& word1, const string& word2) {
@@ -66,6 +63,14 @@ vector<string> generate_word_ladder(const string& begin_word, const string& end_
         return {};
     }
     
+    if (word_list.find(end) == word_list.end()) {
+        return {};
+    }
+    
+    if (is_adjacent(begin, end)) {
+        return {begin, end};
+    }
+    
     queue<vector<string>> ladder_queue;
     ladder_queue.push({begin});
     
@@ -75,33 +80,22 @@ vector<string> generate_word_ladder(const string& begin_word, const string& end_
     while (!ladder_queue.empty()) {
         vector<string> ladder = ladder_queue.front();
         ladder_queue.pop();
-        
         string last_word = ladder.back();
-        
-        if (last_word == end) {
-            return ladder;
-        }
-        
         for (const string& word : word_list) {
             if (visited.find(word) != visited.end()) {
                 continue;
             }
-            
             if (is_adjacent(last_word, word)) {
                 visited.insert(word);
-                
                 vector<string> new_ladder = ladder;
                 new_ladder.push_back(word);
-                
                 if (word == end) {
                     return new_ladder;
                 }
-                
                 ladder_queue.push(new_ladder);
             }
         }
     }
-    
     return {};
 }
 
@@ -110,7 +104,6 @@ void load_words(set<string>& word_list, const string& file_name) {
     if (!file) {
         throw runtime_error("Cannot open dictionary file: " + file_name);
     }
-    
     string word;
     while (file >> word) {
         transform(word.begin(), word.end(), word.begin(), ::tolower);
@@ -124,6 +117,7 @@ void print_word_ladder(const vector<string>& ladder) {
         return;
     }
     
+    cout << "Word ladder found: ";
     for (size_t i = 0; i < ladder.size(); ++i) {
         cout << ladder[i];
         if (i < ladder.size() - 1) {
@@ -131,4 +125,31 @@ void print_word_ladder(const vector<string>& ladder) {
         }
     }
     cout << endl;
+}
+
+void verify_word_ladder() {
+    set<string> word_list;
+    load_words(word_list, "words.txt");
+    cout << "Testing word ladder generation..." << endl;
+    vector<pair<pair<string, string>, int>> test_cases = {
+        {{"cat", "dog"}, 4},
+        {{"marty", "curls"}, 6},
+        {{"code", "data"}, 6},
+        {{"work", "play"}, 6},
+        {{"sleep", "awake"}, 8},
+        {{"car", "cheat"}, 4}
+    };
+    
+    for (const auto& test : test_cases) {
+        string start = test.first.first;
+        string end = test.first.second;
+        int expected_size = test.second;
+        vector<string> ladder = generate_word_ladder(start, end, word_list);
+        cout << "From " << start << " to " << end << ": ";
+        if (ladder.size() == expected_size) {
+            cout << "PASSED (" << ladder.size() << " words)" << endl;
+        } else {
+            cout << "FAILED (expected " << expected_size << ", got " << ladder.size() << ")" << endl;
+        }
+    }
 }
