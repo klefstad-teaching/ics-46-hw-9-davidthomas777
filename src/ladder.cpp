@@ -1,17 +1,21 @@
 #include "ladder.h"
 
-void error(string word1, string word2, string msg) {
-    cerr << "Error for words '" << word1 << "' and '" << word2 << "': " << msg << endl;
+void verify_word_ladder() {
+    set<string> word_list;
+    load_words(word_list, "words.txt");
+    
+    cout << "Testing word ladder generation..." << endl;
+    
+    my_assert(generate_word_ladder("cat", "dog", word_list).size() == 4);
+    my_assert(generate_word_ladder("marty", "curls", word_list).size() == 6);
+    my_assert(generate_word_ladder("code", "data", word_list).size() == 6);
+    my_assert(generate_word_ladder("work", "play", word_list).size() == 6);
+    my_assert(generate_word_ladder("sleep", "awake", word_list).size() == 8);
+    my_assert(generate_word_ladder("car", "cheat", word_list).size() == 4);
 }
 
-bool edit_distance_one_insertion(const string& longer, const string& shorter) {
-    for (size_t i = 0; i <= longer.length(); i++) {
-        string test = longer.substr(0, i) + longer.substr(i+1);
-        if (test == shorter) {
-            return true;
-        }
-    }
-    return false;
+void error(string word1, string word2, string msg) {
+    cerr << "Error for words '" << word1 << "' and '" << word2 << "': " << msg << endl;
 }
 
 bool edit_distance_within(const string& str1, const string& str2, int d) {
@@ -35,10 +39,27 @@ bool edit_distance_within(const string& str1, const string& str2, int d) {
         return true;
     }
     
-    if (len1 - len2 == 1) {
-        return edit_distance_one_insertion(str1, str2);
-    } else if (len2 - len1 == 1) {
-        return edit_distance_one_insertion(str2, str1);
+    if (abs(len1 - len2) == 1) {
+        const string& shorter = (len1 < len2) ? str1 : str2;
+        const string& longer = (len1 < len2) ? str2 : str1;
+        
+        int i = 0, j = 0;
+        bool skip_done = false;
+        
+        while (i < shorter.length() && j < longer.length()) {
+            if (shorter[i] != longer[j]) {
+                if (skip_done) {
+                    return false;
+                }
+                skip_done = true;
+                j++;
+            } else {
+                i++;
+                j++;
+            }
+        }
+        
+        return true;
     }
     
     return false;
@@ -56,11 +77,6 @@ vector<string> generate_word_ladder(const string& begin_word, const string& end_
     
     if (begin == end) {
         error(begin_word, end_word, "Start and end words are the same");
-        return {};
-    }
-    
-    if (word_list.find(end) == word_list.end()) {
-        error(begin_word, end_word, "End word must be in the dictionary");
         return {};
     }
     
@@ -100,7 +116,6 @@ vector<string> generate_word_ladder(const string& begin_word, const string& end_
         }
     }
     
-    // No ladder found
     return {};
 }
 
@@ -130,18 +145,4 @@ void print_word_ladder(const vector<string>& ladder) {
         }
     }
     cout << endl;
-}
-
-void verify_word_ladder() {
-    set<string> word_list;
-    load_words(word_list, "words.txt");
-    
-    #define my_assert(e) {cout << #e << ((e) ? " passed": " failed") << endl;}
-    
-    my_assert(generate_word_ladder("cat", "dog", word_list).size() == 4);
-    my_assert(generate_word_ladder("marty", "curls", word_list).size() == 6);
-    my_assert(generate_word_ladder("code", "data", word_list).size() == 6);
-    my_assert(generate_word_ladder("work", "play", word_list).size() == 6);
-    my_assert(generate_word_ladder("sleep", "awake", word_list).size() == 8);
-    my_assert(generate_word_ladder("car", "cheat", word_list).size() == 4);
 }
